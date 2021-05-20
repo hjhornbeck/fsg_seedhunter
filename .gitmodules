@@ -1,0 +1,3 @@
+[submodule "fsg_miner"]
+	path = fsg_miner
+	url = https://github.com/minecraft-speedrun-client/fsg_miner.git
