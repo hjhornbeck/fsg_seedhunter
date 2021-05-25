@@ -1,2 +1,3 @@
 rootProject.name = 'fsg_seedhunter'
+include 'tls-channel', 'fsg_miner'
 

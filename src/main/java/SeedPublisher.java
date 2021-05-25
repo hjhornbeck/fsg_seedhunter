@@ -6,6 +6,11 @@ import java.io.File;                    // points to the config file
 import java.util.concurrent.Callable;   // allows
 import java.util.Properties;            // read our config file
 
+/**
+ * The brains of FSG SeedHunter. Acts as an intermediary between the server
+ *  and the seed finding code, directing the search for seeds and coordinating
+ *  which seeds to find by communicating with the server.
+ */
 @Command(name = "SeedPublisher",
          mixinStandardHelpOptions = true,
          version = "0.1",
