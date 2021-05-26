@@ -12,10 +12,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
+import java.util.Base64;
 
 import javax.net.ssl.SSLContext;
 
-import io.fusionauth.jwt.json.ZonedDateTimeDeserializer;
 import tlschannel.ClientTlsChannel;
 import tlschannel.TlsChannel;
 
@@ -56,12 +56,26 @@ public class NetworkComs {
     private JWT auth_token = null;
 
     /**
-     * Retrieve the last retrieved JWT authorization token.
+     * Return the last retrieved JWT authorization token.
      * @return The token itself, or null if there was no token.
      */
     public JWT getAuth_token() {
         return auth_token;
     }
+
+    /**
+     * Keep a copy of the filter around, just in case.
+     */
+    private String filter = null;
+
+    /**
+     * Return the last retrieved filter.
+     * @return The filter, or null if there was none.
+     */
+    public String getFilter() {
+        return filter;
+    }
+
 
     /**
      * Make accessing the UTF-8 charset a bit simpler.
@@ -98,7 +112,7 @@ public class NetworkComs {
         String jwt = null;
 
         // build the GET request
-        String get = "GET https://" + this.host + "/credentials/authenticate?src_api_key=" +
+        String get = "GET /credentials/authenticate?src_api_key=" +
                 this.api_key + " HTTP/1.0\nHost: " + this.host + "\n\n";
         ByteBuffer get_bytes = ByteBuffer.wrap(get.getBytes(utf8));
 
@@ -139,4 +153,105 @@ public class NetworkComs {
         else
             return null;
     }
+
+    /**
+     * Get the current filter settings the seed bank is using.
+     * @return A String containing the aforementioned settings, or null on error.
+     */
+    public String get_categories() {
+
+        // see authorize() for a detailed breakdown
+        String filter = null;
+
+        String get = "GET /filtered/get_categories HTTP/1.0\n" +
+                "Host: " + this.host + "\n\n";
+        ByteBuffer get_bytes = ByteBuffer.wrap(get.getBytes(utf8));
+
+        try (SocketChannel channel = SocketChannel.open()) {
+
+            channel.connect( new InetSocketAddress(this.host, this.port) );
+
+            ClientTlsChannel.Builder builder = ClientTlsChannel.newBuilder(channel, this.ssl_context);
+            try (TlsChannel tlsChannel = builder.build()) {
+
+                tlsChannel.write( get_bytes );
+
+                // read in the remote side and tidy it up
+                ByteBuffer result = ByteBuffer.allocate(4096);
+                while (tlsChannel.read(result) != -1) {}
+                result.flip();
+
+                filter = utf8.decode(result).toString();
+            }
+        } catch (IOException e) {
+            return null;
+        }
+
+        // prevent clobbering the existing filter
+        if( filter != null ) {
+            this.filter = filter;
+            return filter;
+        }
+        else
+            return null;
+    }
+
+    /**
+     * Send off a seed to the bank, simultaneously retrieving the next type of seed to work on.
+     * @return A String containing the aforementioned filter settings.
+     */
+    public String submit( long seed ) {
+
+        // same basic idea as the prior ones
+        String filter = null;
+
+        // convert the seed to a string. Kudos: https://stackoverflow.com/a/4485196
+        ByteBuffer seed_buf = ByteBuffer.allocate( Long.BYTES );
+        seed_buf.putLong( seed );
+        String seed_string = utf8.decode( Base64.getEncoder().encode( seed_buf ) ).toString();
+
+        // this time we use POST instead of GET
+        String post = "POST /filtered/submit HTTP/1.0\n" +
+                "Host: " + this.host + "\n" +
+                "Content-Type: multipart/form-data; boundary=\"-----------\"\n" +
+                "\n" +
+                "-------------\n" +
+                "Content-type: application/json; charset=utf-8\n" +
+                "\n" +
+                "{user_token: \"" + this.auth_token.toString() + "\"," +
+                " settings_hash: \"" + this.filter + "\"," +
+                " seed: \"" + seed_string + "\"}\n" +
+                "\n" +
+                "---------------";
+
+        ByteBuffer post_bytes = ByteBuffer.wrap(post.getBytes(utf8));
+
+        try (SocketChannel channel = SocketChannel.open()) {
+
+            channel.connect( new InetSocketAddress(this.host, this.port) );
+
+            ClientTlsChannel.Builder builder = ClientTlsChannel.newBuilder(channel, this.ssl_context);
+            try (TlsChannel tlsChannel = builder.build()) {
+
+                tlsChannel.write( post_bytes );
+
+                // read in the remote side and tidy it up
+                ByteBuffer result = ByteBuffer.allocate(4096);
+                while (tlsChannel.read(result) != -1) {}
+                result.flip();
+
+                filter = utf8.decode(result).toString();
+            }
+        } catch (IOException e) {
+            return null;
+        }
+
+        if( filter != null ) {
+            this.filter = filter;
+            return filter;
+        }
+        else
+            return null;
+    }
+
 }
