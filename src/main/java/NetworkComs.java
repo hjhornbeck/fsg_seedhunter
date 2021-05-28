@@ -51,7 +51,7 @@ public class NetworkComs {
     private SSLContext ssl_context;
 
     /**
-     * Keep a copy of the authorization JWT around, just in case.
+     * Keep a copy of the authorization JWT around, for seed submission.
      */
     private JWT auth_token = null;
 
@@ -64,7 +64,7 @@ public class NetworkComs {
     }
 
     /**
-     * Keep a copy of the filter around, just in case.
+     * Keep a copy of the filter around, for seed submission.
      */
     private String filter = null;
 
