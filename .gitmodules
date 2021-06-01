@@ -1,6 +1,3 @@
 [submodule "fsg_miner"]
 	path = fsg_miner
 	url = https://github.com/minecraft-speedrun-client/fsg_miner.git
-[submodule "tls-channel"]
-	path = tls-channel
-	url = https://github.com/marianobarrios/tls-channel.git
