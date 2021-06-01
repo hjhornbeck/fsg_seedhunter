@@ -3,6 +3,5 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/fsg_miner" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/tls-channel" vcs="Git" />
   </component>
 </project>
