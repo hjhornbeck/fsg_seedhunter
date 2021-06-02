@@ -15,7 +15,7 @@ import java.util.Properties;            // read our config file
          mixinStandardHelpOptions = true,
          version = "0.1",
          description = "Mines for Minecraft seeds and banks them for later use.")
-public class SeedPublisher implements Callable<Integer> {
+public class SeedPublisher implements Callable<Integer>, SeedListener {
 
     @Option(names = {"-c", "--config"}, description = "Location of the configuration file.")
     private File config = new File("SeedPublisher.config");
@@ -50,5 +50,11 @@ public class SeedPublisher implements Callable<Integer> {
     public static void main(String... args) {
         int exitCode = new CommandLine(new SeedPublisher()).execute(args);
         System.exit(exitCode);
+    }
+
+    @Override
+    public void new_seed(Seed seed) {
+        // hand this seed back to the server
+        // new filter given? Stop the miner, update the filter, and restart
     }
 }
